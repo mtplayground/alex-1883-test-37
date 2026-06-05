@@ -4,6 +4,8 @@ import { prisma } from '../db/prisma.js';
 import { createSignedObjectUrl } from '../storage/index.js';
 
 const MAX_CAPTION_LENGTH = 2200;
+const MAX_COMMENT_BODY_LENGTH = 1000;
+const MAX_COMMENTS_PER_POST = 100;
 const DEFAULT_FEED_LIMIT = 20;
 const MAX_FEED_LIMIT = 50;
 const UUID_PATTERN =
@@ -26,6 +28,21 @@ const postSelect = {
   updatedAt: true,
 } as const;
 
+const commentSelect = {
+  body: true,
+  createdAt: true,
+  id: true,
+  postId: true,
+  updatedAt: true,
+  user: {
+    select: {
+      avatarUrl: true,
+      id: true,
+      name: true,
+    },
+  },
+} as const;
+
 type FeedCursor = {
   createdAt: Date;
   id: string;
@@ -41,6 +58,19 @@ type FollowTableExistsRow = {
 
 type FollowRow = {
   following_id: string;
+};
+
+type SelectedComment = {
+  body: string;
+  createdAt: Date;
+  id: string;
+  postId: string;
+  updatedAt: Date;
+  user: {
+    avatarUrl: string | null;
+    id: string;
+    name: string;
+  };
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -67,6 +97,10 @@ function readOptionalCaption(value: unknown): string | null | undefined {
   }
 
   return caption;
+}
+
+function readCommentBody(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
 function readPostId(value: unknown): string | undefined {
@@ -149,6 +183,17 @@ async function serializePostWithImageUrl<TPost extends { imageKey: string }>(
   };
 }
 
+function serializeComment(comment: SelectedComment): Omit<SelectedComment, 'user'> & {
+  author: SelectedComment['user'];
+} {
+  const { user, ...rest } = comment;
+
+  return {
+    ...rest,
+    author: user,
+  };
+}
+
 async function hasFollowsTable(): Promise<boolean> {
   const [row] = await prisma.$queryRaw<FollowTableExistsRow[]>`
     SELECT to_regclass('public.follows') IS NOT NULL AS exists
@@ -189,6 +234,12 @@ async function postExists(postId: string): Promise<boolean> {
 
 async function countPostLikes(postId: string): Promise<number> {
   return prisma.like.count({
+    where: { postId },
+  });
+}
+
+async function countPostComments(postId: string): Promise<number> {
+  return prisma.comment.count({
     where: { postId },
   });
 }
@@ -348,6 +399,113 @@ postsRouter.delete('/posts/:postId/like', requireAuth, async (request, response)
     response.status(500).json({
       error: 'unlike_post_failed',
       message: 'Unable to unlike post.',
+    });
+  }
+});
+
+postsRouter.get('/posts/:postId/comments', async (request, response) => {
+  const postId = readPostId(request.params.postId);
+
+  if (!postId) {
+    response.status(400).json({
+      error: 'invalid_post_id',
+      message: 'Post ID must be a valid UUID.',
+    });
+    return;
+  }
+
+  try {
+    if (!(await postExists(postId))) {
+      response.status(404).json({
+        error: 'post_not_found',
+        message: 'Post was not found.',
+      });
+      return;
+    }
+
+    const [comments, commentCount] = await Promise.all([
+      prisma.comment.findMany({
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        select: commentSelect,
+        take: MAX_COMMENTS_PER_POST,
+        where: { postId },
+      }),
+      countPostComments(postId),
+    ]);
+
+    response.status(200).json({
+      commentCount,
+      comments: comments.map(serializeComment),
+      postId,
+    });
+  } catch (error) {
+    console.error('List comments failed', error);
+    response.status(500).json({
+      error: 'list_comments_failed',
+      message: 'Unable to list comments.',
+    });
+  }
+});
+
+postsRouter.post('/posts/:postId/comments', requireAuth, async (request, response) => {
+  const postId = readPostId(request.params.postId);
+
+  if (!postId) {
+    response.status(400).json({
+      error: 'invalid_post_id',
+      message: 'Post ID must be a valid UUID.',
+    });
+    return;
+  }
+
+  if (!isRecord(request.body)) {
+    response.status(400).json({
+      error: 'invalid_comment_body',
+      message: 'Create-comment request body must be a JSON object.',
+    });
+    return;
+  }
+
+  const body = readCommentBody(request.body.body);
+
+  if (!body || body.length > MAX_COMMENT_BODY_LENGTH) {
+    response.status(400).json({
+      error: 'invalid_comment_text',
+      message: `Comment body must be a non-empty string up to ${MAX_COMMENT_BODY_LENGTH} characters.`,
+    });
+    return;
+  }
+
+  const { userId } = (request as AuthenticatedRequest).auth;
+
+  try {
+    if (!(await postExists(postId))) {
+      response.status(404).json({
+        error: 'post_not_found',
+        message: 'Post was not found.',
+      });
+      return;
+    }
+
+    const comment = await prisma.comment.create({
+      data: {
+        body,
+        postId,
+        userId,
+      },
+      select: commentSelect,
+    });
+
+    response.status(201).json({
+      comment: serializeComment(comment),
+      commentCount: await countPostComments(postId),
+      postId,
+    });
+  } catch (error) {
+    console.error('Create comment failed', error);
+    response.status(500).json({
+      error: 'create_comment_failed',
+      message: 'Unable to create comment.',
     });
   }
 });
