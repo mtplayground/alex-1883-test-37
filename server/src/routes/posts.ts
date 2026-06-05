@@ -1,5 +1,9 @@
 import { Router } from 'express';
-import { type AuthenticatedRequest, requireAuth } from '../auth/middleware.js';
+import {
+  type AuthenticatedRequest,
+  readAuthenticatedPrincipal,
+  requireAuth,
+} from '../auth/middleware.js';
 import { prisma } from '../db/prisma.js';
 import { createSignedObjectUrl } from '../storage/index.js';
 
@@ -183,6 +187,44 @@ async function serializePostWithImageUrl<TPost extends { imageKey: string }>(
   };
 }
 
+async function serializePostWithActivity<
+  TPost extends { id: string; imageKey: string },
+>(
+  post: TPost,
+  viewerId?: string,
+): Promise<
+  TPost & {
+    commentCount: number;
+    imageUrl: string;
+    likeCount: number;
+    likedByViewer: boolean;
+  }
+> {
+  const [serializedPost, likeCount, commentCount, viewerLike] = await Promise.all([
+    serializePostWithImageUrl(post),
+    countPostLikes(post.id),
+    countPostComments(post.id),
+    viewerId
+      ? prisma.like.findUnique({
+          select: { id: true },
+          where: {
+            userId_postId: {
+              postId: post.id,
+              userId: viewerId,
+            },
+          },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  return {
+    ...serializedPost,
+    commentCount,
+    likeCount,
+    likedByViewer: Boolean(viewerLike),
+  };
+}
+
 function serializeComment(comment: SelectedComment): Omit<SelectedComment, 'user'> & {
   author: SelectedComment['user'];
 } {
@@ -290,7 +332,7 @@ postsRouter.get('/feed', requireAuth, async (request, response) => {
     });
     const pagePosts = posts.slice(0, limit);
     const serializedPosts = await Promise.all(
-      pagePosts.map((post) => serializePostWithImageUrl(post)),
+      pagePosts.map((post) => serializePostWithActivity(post, userId)),
     );
     const nextPost = posts.length > limit ? pagePosts.at(-1) : undefined;
 
@@ -535,7 +577,11 @@ postsRouter.get('/posts/:postId', async (request, response) => {
       return;
     }
 
-    response.status(200).json({ post: await serializePostWithImageUrl(post) });
+    const principal = readAuthenticatedPrincipal(request);
+
+    response
+      .status(200)
+      .json({ post: await serializePostWithActivity(post, principal?.userId) });
   } catch (error) {
     console.error('Get post failed', error);
     response.status(500).json({

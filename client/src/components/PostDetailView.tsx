@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../api/client';
 import { getPost, type Post } from '../api/posts';
 import { useAuth } from '../auth/AuthContext';
+import { PostActivity } from './PostActivity';
 
 export type PostDetailViewProps = {
   postId: string | null;
@@ -136,6 +137,13 @@ export function PostDetailView({ postId }: PostDetailViewProps) {
         ) : (
           <p className="post-caption post-caption-empty">No caption</p>
         )}
+
+        <PostActivity
+          initialCommentCount={post.commentCount}
+          initialLikeCount={post.likeCount}
+          initiallyLikedByViewer={post.likedByViewer}
+          postId={post.id}
+        />
       </div>
     </article>
   );
