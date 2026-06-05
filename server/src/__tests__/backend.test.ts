@@ -6,6 +6,7 @@ import test, { after, before } from 'node:test';
 import type { AddressInfo } from 'node:net';
 import type { Express } from 'express';
 import type { IssuedSession, SessionUser } from '../auth/session.js';
+import { ConfigError, type AppConfig } from '../config/env.js';
 
 process.env.NODE_ENV = 'test';
 process.env.GOOGLE_CLIENT_ID ??= 'test-client-id.apps.googleusercontent.com';
@@ -35,6 +36,32 @@ type JsonResponse = {
   body: unknown;
   headers: Headers;
   status: number;
+};
+
+const validConfig: AppConfig = {
+  auth: {
+    googleClientId: 'test-client-id.apps.googleusercontent.com',
+    googleClientSecret: 'test-google-client-secret',
+    googleOAuthRedirectUri: 'http://127.0.0.1:8080/auth/google/callback',
+    jwtSecret: 'issue-31-test-jwt-secret-at-least-32-characters',
+  },
+  database: {
+    url: 'postgresql://user:password@localhost:5432/myclawteam',
+  },
+  nodeEnv: 'test',
+  objectStorage: {
+    accessKeyId: 'test-access-key',
+    bucket: 'test-bucket',
+    endpoint: 'https://storage.example.test',
+    forcePathStyle: true,
+    prefix: 'issue-31-tests',
+    region: 'auto',
+    secretAccessKey: 'test-secret-key',
+  },
+  server: {
+    host: '127.0.0.1',
+    port: 8080,
+  },
 };
 
 const runId = randomUUID();
@@ -169,6 +196,53 @@ after(async () => {
   });
   await modules.prisma.$disconnect();
   await server.close();
+});
+
+test('config validation rejects unsafe deployment values', async () => {
+  const { validateAppConfig } = await import('../config/env.js');
+
+  assert.throws(
+    () =>
+      validateAppConfig({
+        ...validConfig,
+        database: {
+          url: 'sqlite://local.db',
+        },
+      }),
+    (error) => error instanceof ConfigError && /PostgreSQL/.test(error.message),
+  );
+
+  assert.throws(
+    () =>
+      validateAppConfig({
+        ...validConfig,
+        auth: {
+          ...validConfig.auth,
+          jwtSecret: 'short',
+        },
+      }),
+    (error) => error instanceof ConfigError && /32/.test(error.message),
+  );
+});
+
+test('central error handlers return structured JSON responses', async () => {
+  const notFoundResponse = await requestJson('/route-that-does-not-exist');
+  const notFoundBody = asRecord(notFoundResponse.body);
+
+  assert.equal(notFoundResponse.status, 404);
+  assert.equal(notFoundBody.error, 'route_not_found');
+
+  const invalidJsonResponse = await fetch(`${server.baseUrl}/posts`, {
+    body: '{',
+    headers: {
+      'content-type': 'application/json',
+    },
+    method: 'POST',
+  });
+  const invalidJsonBody = asRecord(await invalidJsonResponse.json());
+
+  assert.equal(invalidJsonResponse.status, 400);
+  assert.equal(invalidJsonBody.error, 'invalid_json');
 });
 
 test('auth endpoints and session middleware issue and verify sessions', async () => {
