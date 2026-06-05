@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { AuthProvider } from './auth/AuthContext';
 import { CreatePostForm } from './components/CreatePostForm';
+import { FeedPage } from './components/FeedPage';
 import { Header } from './components/Header';
 import { PostDetailView } from './components/PostDetailView';
 import './styles.css';
@@ -16,13 +17,20 @@ function readPostIdFromPath(pathname: string): string | null {
 }
 
 export function App() {
+  const isCreatePath = /^\/create\/?$/.test(window.location.pathname);
   const postId = readPostIdFromPath(window.location.pathname);
 
   return (
     <>
       <Header />
       <main className="app-shell">
-        {postId ? <PostDetailView key={postId} postId={postId} /> : <CreatePostForm />}
+        {postId ? (
+          <PostDetailView key={postId} postId={postId} />
+        ) : isCreatePath ? (
+          <CreatePostForm />
+        ) : (
+          <FeedPage />
+        )}
       </main>
     </>
   );

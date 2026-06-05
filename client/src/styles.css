@@ -155,6 +155,19 @@ button {
   align-items: start;
 }
 
+.feed-surface {
+  display: grid;
+  width: min(100%, 760px);
+  gap: 24px;
+}
+
+.feed-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .eyebrow {
   margin: 0 0 12px;
   color: #346751;
@@ -285,7 +298,8 @@ p {
 }
 
 .primary-button,
-.secondary-button {
+.secondary-button,
+.primary-link-button {
   min-height: 42px;
   border-radius: 6px;
   cursor: pointer;
@@ -293,9 +307,15 @@ p {
   letter-spacing: 0;
 }
 
-.primary-button {
+.primary-button,
+.primary-link-button {
+  display: inline-grid;
+  align-items: center;
+  justify-content: center;
   background: #0e1b1f;
   color: #ffffff;
+  padding: 0 18px;
+  text-decoration: none;
 }
 
 .primary-button:disabled,
@@ -428,9 +448,145 @@ p {
   width: min(100%, 620px);
 }
 
+.feed-list {
+  display: grid;
+  gap: 22px;
+}
+
+.feed-card,
+.feed-placeholder {
+  overflow: hidden;
+  border: 1px solid rgba(14, 27, 31, 0.12);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(23, 32, 38, 0.08);
+}
+
+.feed-card {
+  display: grid;
+}
+
+.feed-placeholder {
+  min-height: 520px;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent), #e9efe7;
+  background-size: 220% 100%;
+  animation: feed-placeholder-sheen 1.2s ease-in-out infinite;
+}
+
+.feed-card-media,
+.feed-card-image-missing {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #e9efe7;
+  place-items: center;
+}
+
+.feed-card-media {
+  overflow: hidden;
+}
+
+.feed-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.feed-card-body {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.feed-card-author-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.feed-card-avatar {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  place-items: center;
+}
+
+.feed-card-avatar-fallback {
+  background: #346751;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.feed-card-author-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.feed-card-author-name {
+  overflow: hidden;
+  color: #172026;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-card-author-copy time {
+  color: #5c6870;
+  font-size: 0.88rem;
+}
+
+.feed-card-caption {
+  max-width: none;
+  color: #172026;
+  font-size: 1rem;
+  white-space: pre-wrap;
+}
+
+.feed-card-caption-empty {
+  color: #6d787f;
+  font-style: italic;
+}
+
+.feed-card-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #5c6870;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.feed-card-summary span {
+  min-height: 28px;
+  border: 1px solid rgba(14, 27, 31, 0.12);
+  border-radius: 999px;
+  background: #f8faf8;
+  padding: 3px 10px;
+}
+
+.feed-message {
+  width: min(100%, 620px);
+}
+
+@keyframes feed-placeholder-sheen {
+  from {
+    background-position: 160% 0;
+  }
+
+  to {
+    background-position: -60% 0;
+  }
+}
+
 .sign-in-button:hover:not(:disabled),
 .primary-button:hover:not(:disabled),
 .secondary-button:hover:not(:disabled),
+.primary-link-button:hover,
 .image-input::file-selector-button:hover {
   filter: brightness(1.05);
 }
@@ -439,6 +595,7 @@ p {
 .brand-mark:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
+.primary-link-button:focus-visible,
 .image-input:focus-visible,
 .caption-input:focus-visible {
   outline: 3px solid #69b58b;
@@ -477,12 +634,21 @@ p {
     gap: 18px;
   }
 
+  .feed-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
   h1 {
     font-size: 2.4rem;
   }
 
   .create-post-form,
   .post-detail-body {
+    padding: 16px;
+  }
+
+  .feed-card-body {
     padding: 16px;
   }
 }
