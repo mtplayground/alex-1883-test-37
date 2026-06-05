@@ -105,8 +105,36 @@ function normalizePrefix(prefix: string | undefined): string {
   return prefix.trim().replace(/^\/+/, '').replace(/\/+$/, '');
 }
 
+function validateUrl(name: string, value: string): void {
+  try {
+    new URL(value);
+  } catch {
+    throw new ConfigError(`Invalid URL value for ${name}: ${value}`);
+  }
+}
+
+function validateDatabaseUrl(value: string): void {
+  if (!/^postgres(ql)?:\/\//.test(value)) {
+    throw new ConfigError('DATABASE_URL must be a PostgreSQL connection string.');
+  }
+
+  validateUrl('DATABASE_URL', value);
+}
+
+export function validateAppConfig(config: AppConfig): AppConfig {
+  validateDatabaseUrl(config.database.url);
+  validateUrl('GOOGLE_OAUTH_REDIRECT_URI', config.auth.googleOAuthRedirectUri);
+  validateUrl('OBJECT_STORAGE_ENDPOINT', config.objectStorage.endpoint);
+
+  if (config.auth.jwtSecret.length < 32) {
+    throw new ConfigError('JWT_SECRET must be at least 32 characters long.');
+  }
+
+  return config;
+}
+
 export function loadAppConfig(): AppConfig {
-  return {
+  return validateAppConfig({
     auth: {
       googleClientId: readRequiredEnv('GOOGLE_CLIENT_ID'),
       googleClientSecret: readRequiredEnv('GOOGLE_CLIENT_SECRET'),
@@ -134,7 +162,7 @@ export function loadAppConfig(): AppConfig {
       host: readOptionalEnv('HOST') ?? '0.0.0.0',
       port: readPortEnv('PORT', 8080),
     },
-  };
+  });
 }
 
 export function getAppConfig(): AppConfig {

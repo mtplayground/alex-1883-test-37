@@ -1,5 +1,6 @@
 import express from 'express';
 import { checkDatabaseConnection } from './db/health.js';
+import { errorHandler, notFoundHandler } from './errors.js';
 import { authRouter } from './routes/auth.js';
 import { meRouter } from './routes/me.js';
 import { postsRouter } from './routes/posts.js';
@@ -40,6 +41,9 @@ export function createApp(): express.Express {
       message: 'API server initialized',
     });
   });
+
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   return app;
 }

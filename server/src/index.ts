@@ -1,8 +1,27 @@
-import { createApp } from './app.js';
-import { getAppConfig } from './config/env.js';
-import { prisma } from './db/prisma.js';
+import { ConfigError, getAppConfig, type AppConfig } from './config/env.js';
 
-const appConfig = getAppConfig();
+function readBootConfig(): AppConfig {
+  try {
+    return getAppConfig();
+  } catch (error) {
+    if (error instanceof ConfigError) {
+      console.error('Invalid myClawTeam server configuration', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      });
+      process.exit(1);
+    }
+
+    throw error;
+  }
+}
+
+const appConfig = readBootConfig();
+const [{ createApp }, { prisma }] = await Promise.all([
+  import('./app.js'),
+  import('./db/prisma.js'),
+]);
 const app = createApp();
 
 const server = app.listen(appConfig.server.port, appConfig.server.host, () => {
