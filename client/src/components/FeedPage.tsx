@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { getFeedPage, type Post } from '../api/posts';
+import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef } from 'react';
+import { getFeedPage, type FeedPage as FeedPageData, type Post } from '../api/posts';
 import { useAuth } from '../auth/AuthContext';
 
-type FeedStatus = 'error' | 'loading' | 'ready';
+const FEED_PAGE_LIMIT = 10;
 
 function getInitials(name: string): string {
   const initials = name
@@ -69,41 +70,58 @@ function PostCard({ post }: { post: Post }) {
 
 export function FeedPage() {
   const { apiClient, status } = useAuth();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [feedStatus, setFeedStatus] = useState<FeedStatus>('loading');
-  const [posts, setPosts] = useState<Post[]>([]);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const feedQuery = useInfiniteQuery<
+    FeedPageData,
+    Error,
+    InfiniteData<FeedPageData>,
+    ['feed', string],
+    string | null
+  >({
+    enabled: status === 'authenticated',
+    getNextPageParam: (lastPage) => lastPage.pageInfo.nextCursor ?? undefined,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) =>
+      getFeedPage(apiClient, {
+        cursor: pageParam,
+        limit: FEED_PAGE_LIMIT,
+      }),
+    queryKey: ['feed', status],
+  });
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isError,
+    isFetchingNextPage,
+    isLoading,
+    isSuccess,
+  } = feedQuery;
+  const posts = useMemo(() => data?.pages.flatMap((page) => page.posts) ?? [], [data]);
 
   useEffect(() => {
-    if (status !== 'authenticated') {
+    const loadMoreElement = loadMoreRef.current;
+
+    if (!loadMoreElement || !hasNextPage || isFetchingNextPage) {
       return;
     }
 
-    let isActive = true;
-
-    getFeedPage(apiClient)
-      .then((feedPage) => {
-        if (!isActive) {
-          return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void fetchNextPage();
         }
+      },
+      { rootMargin: '480px 0px' },
+    );
 
-        setPosts(feedPage.posts);
-        setFeedStatus('ready');
-      })
-      .catch((error: unknown) => {
-        if (!isActive) {
-          return;
-        }
-
-        setErrorMessage(
-          error instanceof Error ? error.message : 'Unable to load feed.',
-        );
-        setFeedStatus('error');
-      });
+    observer.observe(loadMoreElement);
 
     return () => {
-      isActive = false;
+      observer.disconnect();
     };
-  }, [apiClient, status]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   if (status === 'loading') {
     return (
@@ -140,32 +158,35 @@ export function FeedPage() {
         </a>
       </div>
 
-      {feedStatus === 'loading' ? (
+      {isLoading ? (
         <div className="feed-list" aria-live="polite">
           <div className="feed-placeholder" />
           <div className="feed-placeholder" />
         </div>
       ) : null}
 
-      {feedStatus === 'error' ? (
+      {isError ? (
         <div className="feed-message">
           <h1>Feed unavailable</h1>
-          <p>{errorMessage ?? 'Unable to load feed.'}</p>
+          <p>{error instanceof Error ? error.message : 'Unable to load feed.'}</p>
         </div>
       ) : null}
 
-      {feedStatus === 'ready' && posts.length === 0 ? (
+      {isSuccess && posts.length === 0 ? (
         <div className="feed-message">
           <h1>No posts yet</h1>
           <p>Your feed is empty.</p>
         </div>
       ) : null}
 
-      {feedStatus === 'ready' && posts.length > 0 ? (
+      {isSuccess && posts.length > 0 ? (
         <div className="feed-list">
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
+          <div ref={loadMoreRef} className="feed-load-sentinel">
+            {isFetchingNextPage ? 'Loading more' : null}
+          </div>
         </div>
       ) : null}
     </section>

@@ -61,6 +61,11 @@ export type CreatePostInput = {
   imageKey: string;
 };
 
+export type GetFeedPageOptions = {
+  cursor?: string | null;
+  limit?: number;
+};
+
 function readJsonBody(responseText: string): unknown {
   if (!responseText) {
     return null;
@@ -161,6 +166,21 @@ export async function getPost(apiClient: ApiClient, postId: string): Promise<Pos
   return response.post;
 }
 
-export async function getFeedPage(apiClient: ApiClient): Promise<FeedPage> {
-  return apiClient.request<FeedPage>('/feed');
+export async function getFeedPage(
+  apiClient: ApiClient,
+  options: GetFeedPageOptions = {},
+): Promise<FeedPage> {
+  const searchParams = new URLSearchParams();
+
+  if (options.cursor) {
+    searchParams.set('cursor', options.cursor);
+  }
+
+  if (options.limit !== undefined) {
+    searchParams.set('limit', String(options.limit));
+  }
+
+  const queryString = searchParams.toString();
+
+  return apiClient.request<FeedPage>(queryString ? `/feed?${queryString}` : '/feed');
 }
