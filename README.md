@@ -51,6 +51,9 @@ Run the frontend development server:
 npm run dev:client
 ```
 
+Set `VITE_API_BASE_URL` when the frontend should call a backend on a different
+origin. When it is unset, client API requests use the current origin.
+
 Generate the Prisma client:
 
 ```bash
