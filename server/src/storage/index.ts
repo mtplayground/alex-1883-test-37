@@ -4,6 +4,7 @@ export {
   readObjectStorageConfig,
   type ObjectStorageConfig,
 } from './config.js';
+export { getAppConfig, loadAppConfig, resetAppConfigForTests } from '../config/env.js';
 export {
   createObjectKey,
   createSignedObjectUrl,

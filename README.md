@@ -15,6 +15,12 @@ Install dependencies:
 npm install
 ```
 
+Create local environment settings:
+
+```bash
+cp .env.example .env
+```
+
 Build all packages:
 
 ```bash
