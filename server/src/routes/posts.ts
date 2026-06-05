@@ -178,6 +178,21 @@ async function readVisibleAuthorIds(userId: string): Promise<string[]> {
   );
 }
 
+async function postExists(postId: string): Promise<boolean> {
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: { id: true },
+  });
+
+  return Boolean(post);
+}
+
+async function countPostLikes(postId: string): Promise<number> {
+  return prisma.like.count({
+    where: { postId },
+  });
+}
+
 postsRouter.get('/feed', requireAuth, async (request, response) => {
   const limit = readFeedLimit(request.query.limit);
   const parsedCursor = parseFeedCursor(request.query.cursor);
@@ -240,6 +255,99 @@ postsRouter.get('/feed', requireAuth, async (request, response) => {
     response.status(500).json({
       error: 'feed_fetch_failed',
       message: 'Unable to load feed.',
+    });
+  }
+});
+
+postsRouter.post('/posts/:postId/like', requireAuth, async (request, response) => {
+  const postId = readPostId(request.params.postId);
+
+  if (!postId) {
+    response.status(400).json({
+      error: 'invalid_post_id',
+      message: 'Post ID must be a valid UUID.',
+    });
+    return;
+  }
+
+  const { userId } = (request as AuthenticatedRequest).auth;
+
+  try {
+    if (!(await postExists(postId))) {
+      response.status(404).json({
+        error: 'post_not_found',
+        message: 'Post was not found.',
+      });
+      return;
+    }
+
+    await prisma.like.upsert({
+      create: {
+        postId,
+        userId,
+      },
+      update: {},
+      where: {
+        userId_postId: {
+          postId,
+          userId,
+        },
+      },
+    });
+
+    response.status(200).json({
+      likeCount: await countPostLikes(postId),
+      likedByViewer: true,
+      postId,
+    });
+  } catch (error) {
+    console.error('Like post failed', error);
+    response.status(500).json({
+      error: 'like_post_failed',
+      message: 'Unable to like post.',
+    });
+  }
+});
+
+postsRouter.delete('/posts/:postId/like', requireAuth, async (request, response) => {
+  const postId = readPostId(request.params.postId);
+
+  if (!postId) {
+    response.status(400).json({
+      error: 'invalid_post_id',
+      message: 'Post ID must be a valid UUID.',
+    });
+    return;
+  }
+
+  const { userId } = (request as AuthenticatedRequest).auth;
+
+  try {
+    if (!(await postExists(postId))) {
+      response.status(404).json({
+        error: 'post_not_found',
+        message: 'Post was not found.',
+      });
+      return;
+    }
+
+    await prisma.like.deleteMany({
+      where: {
+        postId,
+        userId,
+      },
+    });
+
+    response.status(200).json({
+      likeCount: await countPostLikes(postId),
+      likedByViewer: false,
+      postId,
+    });
+  } catch (error) {
+    console.error('Unlike post failed', error);
+    response.status(500).json({
+      error: 'unlike_post_failed',
+      message: 'Unable to unlike post.',
     });
   }
 });
