@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { AuthProvider } from './auth/AuthContext';
+import { CreatePostForm } from './components/CreatePostForm';
 import { Header } from './components/Header';
 import './styles.css';
 
@@ -8,14 +9,7 @@ export function App() {
     <>
       <Header />
       <main className="app-shell">
-        <section className="intro">
-          <p className="eyebrow">myClawTeam</p>
-          <h1>Share and follow claw machine wins.</h1>
-          <p>
-            The frontend package is ready for the auth, posting, feed, and profile flows
-            planned in the upcoming issues.
-          </p>
-        </section>
+        <CreatePostForm />
       </main>
     </>
   );
