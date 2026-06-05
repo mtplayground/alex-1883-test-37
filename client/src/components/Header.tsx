@@ -27,7 +27,11 @@ export function Header() {
       </a>
       <div className="auth-slot">
         {isSignedIn ? (
-          <div className="user-chip" aria-label={`Signed in as ${user.name}`}>
+          <a
+            className="user-chip"
+            href={`/users/${encodeURIComponent(user.id)}`}
+            aria-label={`Signed in as ${user.name}`}
+          >
             {user.avatarUrl ? (
               <img className="user-avatar" src={user.avatarUrl} alt="" />
             ) : (
@@ -36,7 +40,7 @@ export function Header() {
               </span>
             )}
             <span className="user-name">{user.name}</span>
-          </div>
+          </a>
         ) : (
           <button
             className="sign-in-button"

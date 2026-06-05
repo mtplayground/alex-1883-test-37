@@ -38,7 +38,10 @@ function PostCard({ post }: { post: Post }) {
       </a>
 
       <div className="feed-card-body">
-        <div className="feed-card-author-row">
+        <a
+          className="feed-card-author-row"
+          href={`/users/${encodeURIComponent(post.author.id)}`}
+        >
           {post.author.avatarUrl ? (
             <img className="feed-card-avatar" src={post.author.avatarUrl} alt="" />
           ) : (
@@ -50,7 +53,7 @@ function PostCard({ post }: { post: Post }) {
             <span className="feed-card-author-name">{post.author.name}</span>
             <time dateTime={post.createdAt}>{postDate}</time>
           </div>
-        </div>
+        </a>
 
         {post.caption ? (
           <p className="feed-card-caption">{post.caption}</p>

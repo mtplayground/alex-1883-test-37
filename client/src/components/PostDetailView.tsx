@@ -118,7 +118,10 @@ export function PostDetailView({ postId }: PostDetailViewProps) {
       </div>
 
       <div className="post-detail-body">
-        <div className="post-author-row">
+        <a
+          className="post-author-row"
+          href={`/users/${encodeURIComponent(post.author.id)}`}
+        >
           {post.author.avatarUrl ? (
             <img className="post-author-avatar" src={post.author.avatarUrl} alt="" />
           ) : (
@@ -130,7 +133,7 @@ export function PostDetailView({ postId }: PostDetailViewProps) {
             <span className="post-author-name">{post.author.name}</span>
             {postDate ? <time dateTime={post.createdAt}>{postDate}</time> : null}
           </div>
-        </div>
+        </a>
 
         {post.caption ? (
           <p className="post-caption">{post.caption}</p>
