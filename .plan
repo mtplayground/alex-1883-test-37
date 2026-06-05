@@ -1,0 +1,71 @@
+myClawTeam architecture plan
+
+Product context
+- Product name: myClawTeam, taken from the GitHub issue text.
+- No PRODUCT.md exists in the repository at setup time; the initial plan is based on issues #1-#31 and their read-only GitHub issue scopes.
+
+Module structure and file organization
+- Root workspace: npm workspace or equivalent package-managed monorepo with `client/`, `server/`, and optional `shared/`.
+- `client/`: React + Vite TypeScript app.
+  - `src/api/`: typed API client, auth token handling, React Query query/mutation wrappers.
+  - `src/auth/`: auth context, current-user bootstrap, sign-in/sign-out helpers.
+  - `src/components/`: header, post cards, post forms, like/comment controls, shared UI primitives.
+  - `src/pages/`: feed, post detail, profile, create post.
+  - `src/routes/`: browser routes and route guards.
+  - `src/test/`: component test setup and mocks.
+- `server/`: Express TypeScript API.
+  - `src/config/`: environment parsing and validation.
+  - `src/db/`: Prisma client singleton and database utilities.
+  - `src/storage/`: S3-compatible object storage client, upload helpers, signed URL helpers.
+  - `src/auth/`: Google OAuth callback flow, JWT issuance/verification middleware.
+  - `src/routes/`: route modules for auth, posts, feed, likes, comments, follows, profiles.
+  - `src/services/`: business logic isolated from Express request/response objects.
+  - `src/errors/`: centralized error classes, handler middleware, response formatting.
+  - `prisma/schema.prisma` and `prisma/migrations/`: data model and migrations.
+  - `test/`: endpoint and service unit tests.
+- `shared/`: shared TypeScript DTOs and validation schemas if issue #1 chooses a third package. Prefer Zod schemas or generated Prisma-derived types at API boundaries rather than duplicating ad hoc interfaces.
+
+Data model
+- `users`: id, googleId unique, email unique, name, avatarUrl, createdAt, updatedAt.
+- `posts`: id, authorId, imageKey, optional caption, createdAt, updatedAt; author relation and indexes for feed ordering.
+- `likes`: id or composite key, userId, postId, createdAt; unique `(userId, postId)` to make like/unlike idempotent.
+- `comments`: id, userId, postId, body, createdAt, updatedAt; indexed by `(postId, createdAt)`.
+- `follows`: followerId, followeeId, createdAt; unique `(followerId, followeeId)` and guard against self-follow.
+
+API design
+- Auth:
+  - `GET /auth/google/start` or client-side Google URL builder to launch OAuth.
+  - `GET /auth/google/callback` exchanges code, upserts user, issues JWT session.
+  - `GET /me` returns the authenticated user.
+- Posts:
+  - `POST /uploads/images` stores image object and returns image key or URL metadata.
+  - `POST /posts` creates post metadata for the authenticated user.
+  - `GET /posts/:id` fetches a post with author, counts, viewer state where useful.
+  - `DELETE /posts/:id` only allows owner deletion.
+- Feed:
+  - `GET /feed?cursor=...&limit=...` returns viewer plus followed users' posts newest first.
+- Social:
+  - `POST /posts/:id/like` and `DELETE /posts/:id/like`.
+  - `GET /posts/:id/comments` and `POST /posts/:id/comments`.
+  - `POST /users/:id/follow` and `DELETE /users/:id/follow`.
+  - `GET /users/:id/profile` returns profile, post grid data, and follower/following counts.
+
+Issue dependencies
+- Foundation: #1 monorepo first, then #2 TypeScript/lint/format, #5 env config, #3 Prisma/Postgres, #4 storage client.
+- Auth: #6 users model enables #7 Google OAuth/JWT, #8 auth middleware/current user, #9 client auth/API, and #10 header sign-in UI.
+- Posts: #11 posts model enables #12 upload/create, #13 get/delete, #14 create-post UI, and #15 detail UI.
+- Feed: #16 depends on posts and follows concepts, #17 renders feed, #18 adds infinite scroll.
+- Engagement: #19 likes model before #20 endpoints; #21 comments model before #22 endpoints; #23 wires like/comment UI.
+- Profiles/follows: #24 follows model before #25 endpoints and #26 profile endpoint; #27 profile UI consumes those APIs.
+- Quality/release: #28 backend tests and #29 frontend tests should grow alongside feature work; #30 E2E validates sign-in to post to feed; #31 finalizes error handling, env validation, and deployment docs.
+- Some issue bodies refer to task numbers like `Issue 7.1`; treat those as stale subtask references and map implementation order to the numbered GitHub issues above.
+
+Key design decisions
+- Keep server business logic in services so endpoint tests can mock auth, Prisma, and storage cleanly.
+- Use Prisma migrations as the source of truth for all relational schema changes.
+- Keep uploaded image objects addressed by storage keys in Postgres; generate signed URLs or public URLs at response time depending on object storage configuration.
+- Use JWT bearer sessions consistently between client and server, with current-user bootstrap through `/me`.
+- Use cursor pagination for feed endpoints from the start so #18 can layer infinite scroll without API churn.
+- Return viewer-specific state on post/feed responses where practical: `likedByViewer`, counts, author summary, and comment preview/count.
+- Centralize environment validation early so later OAuth, storage, database, and deployment tasks fail fast with clear messages.
+- Prefer shared validation schemas/DTOs for request and response contracts; keep Prisma models internal to the server.
