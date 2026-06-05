@@ -3,6 +3,7 @@ import { getAppConfig } from './config/env.js';
 import { checkDatabaseConnection } from './db/health.js';
 import { prisma } from './db/prisma.js';
 import { authRouter } from './routes/auth.js';
+import { meRouter } from './routes/me.js';
 
 const appConfig = getAppConfig();
 
@@ -11,6 +12,7 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.json());
 app.use('/auth', authRouter);
+app.use(meRouter);
 
 app.get('/health', (_request, response) => {
   response.status(200).json({ status: 'ok', service: 'myClawTeam' });
