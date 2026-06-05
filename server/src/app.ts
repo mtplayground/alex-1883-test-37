@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { checkDatabaseConnection } from './db/health.js';
 import { errorHandler, notFoundHandler } from './errors.js';
@@ -9,7 +10,8 @@ import { postsRouter } from './routes/posts.js';
 import { uploadsRouter } from './routes/uploads.js';
 import { usersRouter } from './routes/users.js';
 
-const clientDistPath = join(process.cwd(), 'client', 'dist');
+const serverModuleDir = dirname(fileURLToPath(import.meta.url));
+const clientDistPath = join(serverModuleDir, '..', '..', 'client', 'dist');
 const clientIndexPath = join(clientDistPath, 'index.html');
 const clientRoutePattern = /^\/(?:$|create\/?$|posts\/[^/]+\/?$|users\/[^/]+\/?$)/;
 
