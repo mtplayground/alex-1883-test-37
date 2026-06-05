@@ -2,6 +2,7 @@ import express from 'express';
 import { getAppConfig } from './config/env.js';
 import { checkDatabaseConnection } from './db/health.js';
 import { prisma } from './db/prisma.js';
+import { authRouter } from './routes/auth.js';
 
 const appConfig = getAppConfig();
 
@@ -9,6 +10,7 @@ const app = express();
 
 app.disable('x-powered-by');
 app.use(express.json());
+app.use('/auth', authRouter);
 
 app.get('/health', (_request, response) => {
   response.status(200).json({ status: 'ok', service: 'myClawTeam' });
