@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { type AuthenticatedRequest, requireAuth } from '../auth/middleware.js';
 import { prisma } from '../db/prisma.js';
+import { createSignedObjectUrl } from '../storage/index.js';
 
 const MAX_CAPTION_LENGTH = 2200;
 const UUID_PATTERN =
@@ -78,7 +79,14 @@ postsRouter.get('/posts/:postId', async (request, response) => {
       return;
     }
 
-    response.status(200).json({ post });
+    const imageUrl = await createSignedObjectUrl({ key: post.imageKey });
+
+    response.status(200).json({
+      post: {
+        ...post,
+        imageUrl,
+      },
+    });
   } catch (error) {
     console.error('Get post failed', error);
     response.status(500).json({

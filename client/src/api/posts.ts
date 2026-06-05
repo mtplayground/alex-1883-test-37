@@ -24,6 +24,7 @@ export type Post = {
   createdAt: string;
   id: string;
   imageKey: string;
+  imageUrl?: string | null;
   updatedAt: string;
 };
 
@@ -32,6 +33,10 @@ type UploadImageResponse = {
 };
 
 type CreatePostResponse = {
+  post: Post;
+};
+
+type GetPostResponse = {
   post: Post;
 };
 
@@ -134,6 +139,14 @@ export async function createPost(
     body: input,
     method: 'POST',
   });
+
+  return response.post;
+}
+
+export async function getPost(apiClient: ApiClient, postId: string): Promise<Post> {
+  const response = await apiClient.request<GetPostResponse>(
+    `/posts/${encodeURIComponent(postId)}`,
+  );
 
   return response.post;
 }
