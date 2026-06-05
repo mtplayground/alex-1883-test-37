@@ -39,6 +39,12 @@ Start Google sign-in from the backend:
 http://localhost:8080/auth/google
 ```
 
+Fetch the current signed-in user:
+
+```bash
+curl -H "Authorization: Bearer <token>" http://localhost:8080/me
+```
+
 Run the frontend development server:
 
 ```bash
