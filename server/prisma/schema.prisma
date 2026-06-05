@@ -15,6 +15,7 @@ model User {
   avatarUrl String?  @map("avatar_url")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  comments  Comment[]
   likes     Like[]
   posts     Post[]
 
@@ -30,6 +31,7 @@ model Post {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
   likes  Like[]
 
   @@index([authorId, createdAt])
@@ -48,4 +50,20 @@ model Like {
   @@unique([userId, postId])
   @@index([postId, createdAt])
   @@map("likes")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  body      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@index([userId, createdAt])
+  @@map("comments")
 }
