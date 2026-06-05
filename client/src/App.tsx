@@ -1,15 +1,15 @@
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-function App() {
+export function App() {
   return (
     <main className="app-shell">
       <section className="intro">
         <p className="eyebrow">myClawTeam</p>
         <h1>Share and follow claw machine wins.</h1>
         <p>
-          The frontend package is ready for the auth, posting, feed, and profile
-          flows planned in the upcoming issues.
+          The frontend package is ready for the auth, posting, feed, and profile flows
+          planned in the upcoming issues.
         </p>
       </section>
     </main>

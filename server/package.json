@@ -4,9 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node --check src/index.js",
-    "dev": "node --watch src/index.js",
-    "start": "node src/index.js"
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "express": "^4.21.2"
