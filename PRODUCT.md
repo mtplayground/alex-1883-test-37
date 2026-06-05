@@ -22,15 +22,18 @@ and follow relationships.
 
 - Monorepo with `client/` for the React + Vite frontend and `server/` for the
   Express API.
+- In production, the Express server serves the built React app from
+  `client/dist` and exposes API routes from the same origin.
 - Persistent state is PostgreSQL only, accessed through Prisma models and
   migrations. The schema includes `users`, `posts`, `likes`, `comments`, and
   `follows`.
 - Uploaded images are stored in S3-compatible object storage. Storage keys are
   normalized through the configured object storage prefix before upload or
   signed URL generation.
-- Runtime configuration is centralized in environment loading. Required values
-  cover PostgreSQL, object storage, Google OAuth, JWT secret, host, and port;
-  invalid deployment configuration fails during server boot.
+- Runtime configuration is centralized in environment loading. PostgreSQL and a
+  sufficiently long JWT secret are required; Google OAuth and object storage are
+  enabled only when their full credential sets are configured. Invalid required
+  deployment configuration fails during server boot.
 - The server listens on `0.0.0.0:8080` by default and exposes JSON APIs plus
   `/health` and `/health/database`.
 
