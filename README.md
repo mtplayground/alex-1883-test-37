@@ -45,6 +45,15 @@ Fetch the current signed-in user:
 curl -H "Authorization: Bearer <token>" http://localhost:8080/me
 ```
 
+Upload an image and create a post:
+
+```bash
+curl -H "Authorization: Bearer <token>" -F "image=@/path/to/image.jpg" http://localhost:8080/uploads/images
+curl -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -d '{"imageKey":"<uploaded image key>","caption":"First win"}' \
+  http://localhost:8080/posts
+```
+
 Run the frontend development server:
 
 ```bash
