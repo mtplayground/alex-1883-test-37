@@ -573,6 +573,15 @@ p {
   width: min(100%, 620px);
 }
 
+.feed-load-sentinel {
+  display: grid;
+  min-height: 44px;
+  color: #5c6870;
+  font-size: 0.9rem;
+  font-weight: 800;
+  place-items: center;
+}
+
 @keyframes feed-placeholder-sheen {
   from {
     background-position: 160% 0;
