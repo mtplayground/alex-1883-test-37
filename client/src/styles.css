@@ -24,6 +24,106 @@ body {
   min-height: 100vh;
 }
 
+button,
+a {
+  font: inherit;
+}
+
+.site-header {
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  padding: 18px 28px;
+  pointer-events: none;
+}
+
+.brand-mark {
+  color: #0e1b1f;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  pointer-events: auto;
+  text-decoration: none;
+}
+
+.auth-slot {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 104px;
+  pointer-events: auto;
+}
+
+.sign-in-button {
+  min-width: 88px;
+  min-height: 40px;
+  border: 1px solid #0e1b1f;
+  border-radius: 6px;
+  background: #0e1b1f;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  padding: 0 16px;
+}
+
+.sign-in-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.sign-in-button:focus-visible,
+.brand-mark:focus-visible {
+  outline: 3px solid #69b58b;
+  outline-offset: 3px;
+}
+
+.user-chip {
+  display: grid;
+  grid-template-columns: 36px minmax(0, max-content);
+  align-items: center;
+  max-width: min(54vw, 260px);
+  min-height: 40px;
+  column-gap: 10px;
+  border: 1px solid rgba(14, 27, 31, 0.16);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 2px 10px 2px 2px;
+}
+
+.user-avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  place-items: center;
+}
+
+.user-avatar-fallback {
+  background: #346751;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.user-name {
+  overflow: hidden;
+  color: #172026;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .app-shell {
   display: grid;
   min-height: 100vh;
@@ -57,4 +157,19 @@ p {
   max-width: 54ch;
   color: #46545c;
   font-size: 1.08rem;
+}
+
+@media (max-width: 560px) {
+  .site-header {
+    min-height: 64px;
+    padding: 14px 16px;
+  }
+
+  .brand-mark {
+    font-size: 0.9rem;
+  }
+
+  .user-chip {
+    max-width: 58vw;
+  }
 }

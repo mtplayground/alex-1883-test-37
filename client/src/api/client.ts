@@ -20,7 +20,7 @@ export type ApiRequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
 };
 
-function buildUrl(path: string): string {
+export function buildApiUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
   return `${API_BASE_URL}${normalizedPath}`;
@@ -87,7 +87,7 @@ export class ApiClient {
       requestInit.body = body;
     }
 
-    const response = await fetch(buildUrl(path), requestInit);
+    const response = await fetch(buildApiUrl(path), requestInit);
     const responseBody = await readResponseBody(response);
 
     if (!response.ok) {
