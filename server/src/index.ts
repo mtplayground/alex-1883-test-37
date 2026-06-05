@@ -1,15 +1,9 @@
 import express from 'express';
+import { getAppConfig } from './config/env.js';
 import { checkDatabaseConnection } from './db/health.js';
 import { prisma } from './db/prisma.js';
 
-const DEFAULT_PORT = 8080;
-const HOST = process.env.HOST || '0.0.0.0';
-const portValue = process.env.PORT || String(DEFAULT_PORT);
-const PORT = Number.parseInt(portValue, 10);
-
-if (!Number.isInteger(PORT) || PORT <= 0 || PORT > 65535) {
-  throw new Error(`Invalid PORT value: ${portValue}`);
-}
+const appConfig = getAppConfig();
 
 const app = express();
 
@@ -40,8 +34,10 @@ app.get('/', (_request, response) => {
   });
 });
 
-const server = app.listen(PORT, HOST, () => {
-  console.log(`myClawTeam server listening on http://${HOST}:${PORT}`);
+const server = app.listen(appConfig.server.port, appConfig.server.host, () => {
+  console.log(
+    `myClawTeam server listening on http://${appConfig.server.host}:${appConfig.server.port}`,
+  );
 });
 
 async function shutdown(signal: NodeJS.Signals): Promise<void> {
