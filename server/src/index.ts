@@ -6,6 +6,7 @@ import { authRouter } from './routes/auth.js';
 import { meRouter } from './routes/me.js';
 import { postsRouter } from './routes/posts.js';
 import { uploadsRouter } from './routes/uploads.js';
+import { usersRouter } from './routes/users.js';
 
 const appConfig = getAppConfig();
 
@@ -17,6 +18,7 @@ app.use('/auth', authRouter);
 app.use(meRouter);
 app.use(postsRouter);
 app.use(uploadsRouter);
+app.use(usersRouter);
 
 app.get('/health', (_request, response) => {
   response.status(200).json({ status: 'ok', service: 'myClawTeam' });
