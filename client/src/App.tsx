@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { AuthProvider } from './auth/AuthContext';
 import './styles.css';
 
 export function App() {
@@ -22,4 +23,8 @@ if (!rootElement) {
   throw new Error('Root element #root was not found.');
 }
 
-createRoot(rootElement).render(<App />);
+createRoot(rootElement).render(
+  <AuthProvider>
+    <App />
+  </AuthProvider>,
+);
