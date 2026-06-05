@@ -33,6 +33,12 @@ Run the backend API on `0.0.0.0:8080`:
 npm run dev:server
 ```
 
+Start Google sign-in from the backend:
+
+```bash
+http://localhost:8080/auth/google
+```
+
 Run the frontend development server:
 
 ```bash
