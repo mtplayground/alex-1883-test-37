@@ -32,3 +32,16 @@ Run the frontend development server:
 ```bash
 npm run dev:client
 ```
+
+Generate the Prisma client:
+
+```bash
+npm run prisma:generate --workspace server
+```
+
+Apply committed database migrations:
+
+```bash
+export DATABASE_URL=$(cat /workspace/.database_url)
+npm run prisma:migrate --workspace server
+```
