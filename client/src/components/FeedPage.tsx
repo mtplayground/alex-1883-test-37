@@ -2,6 +2,7 @@ import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import { getFeedPage, type FeedPage as FeedPageData, type Post } from '../api/posts';
 import { useAuth } from '../auth/AuthContext';
+import { PostActivity } from './PostActivity';
 
 const FEED_PAGE_LIMIT = 10;
 
@@ -25,8 +26,6 @@ function formatPostDate(value: string): string {
 
 function PostCard({ post }: { post: Post }) {
   const postDate = useMemo(() => formatPostDate(post.createdAt), [post.createdAt]);
-  const likeCount = 0;
-  const commentCount = 0;
 
   return (
     <article className="feed-card">
@@ -59,10 +58,12 @@ function PostCard({ post }: { post: Post }) {
           <p className="feed-card-caption feed-card-caption-empty">No caption</p>
         )}
 
-        <div className="feed-card-summary" aria-label="Post activity">
-          <span>{likeCount} likes</span>
-          <span>{commentCount} comments</span>
-        </div>
+        <PostActivity
+          initialCommentCount={post.commentCount}
+          initialLikeCount={post.likeCount}
+          initiallyLikedByViewer={post.likedByViewer}
+          postId={post.id}
+        />
       </div>
     </article>
   );

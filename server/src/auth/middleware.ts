@@ -30,6 +30,34 @@ function isJwtPayload(value: string | jwt.JwtPayload): value is jwt.JwtPayload {
   return typeof value === 'object' && value !== null;
 }
 
+export function readAuthenticatedPrincipal(
+  request: Request,
+): AuthenticatedPrincipal | null {
+  const token = readBearerToken(request.header('authorization'));
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const config = getAppConfig();
+    const payload = jwt.verify(token, config.auth.jwtSecret, {
+      audience: 'myclawteam:web',
+      issuer: 'myclawteam',
+    });
+
+    if (!isJwtPayload(payload) || typeof payload.sub !== 'string') {
+      return null;
+    }
+
+    return {
+      userId: payload.sub,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function requireAuth(
   request: Request,
   response: Response,

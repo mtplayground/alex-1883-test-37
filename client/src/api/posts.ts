@@ -21,10 +21,22 @@ export type UploadedImage = {
 export type Post = {
   author: Pick<CurrentUser, 'avatarUrl' | 'id' | 'name'>;
   caption: string | null;
+  commentCount?: number;
   createdAt: string;
   id: string;
   imageKey: string;
   imageUrl?: string | null;
+  likeCount?: number;
+  likedByViewer?: boolean;
+  updatedAt: string;
+};
+
+export type PostComment = {
+  author: Pick<CurrentUser, 'avatarUrl' | 'id' | 'name'>;
+  body: string;
+  createdAt: string;
+  id: string;
+  postId: string;
   updatedAt: string;
 };
 
@@ -38,6 +50,24 @@ type CreatePostResponse = {
 
 type GetPostResponse = {
   post: Post;
+};
+
+type LikePostResponse = {
+  likedByViewer: boolean;
+  likeCount: number;
+  postId: string;
+};
+
+type ListCommentsResponse = {
+  commentCount: number;
+  comments: PostComment[];
+  postId: string;
+};
+
+type CreateCommentResponse = {
+  comment: PostComment;
+  commentCount: number;
+  postId: string;
 };
 
 export type FeedPageInfo = {
@@ -59,6 +89,10 @@ export type UploadImageOptions = {
 export type CreatePostInput = {
   caption: string | null;
   imageKey: string;
+};
+
+export type CreateCommentInput = {
+  body: string;
 };
 
 export type GetFeedPageOptions = {
@@ -164,6 +198,53 @@ export async function getPost(apiClient: ApiClient, postId: string): Promise<Pos
   );
 
   return response.post;
+}
+
+export async function likePost(
+  apiClient: ApiClient,
+  postId: string,
+): Promise<LikePostResponse> {
+  return apiClient.request<LikePostResponse>(
+    `/posts/${encodeURIComponent(postId)}/like`,
+    {
+      method: 'POST',
+    },
+  );
+}
+
+export async function unlikePost(
+  apiClient: ApiClient,
+  postId: string,
+): Promise<LikePostResponse> {
+  return apiClient.request<LikePostResponse>(
+    `/posts/${encodeURIComponent(postId)}/like`,
+    {
+      method: 'DELETE',
+    },
+  );
+}
+
+export async function listPostComments(
+  apiClient: ApiClient,
+  postId: string,
+): Promise<ListCommentsResponse> {
+  return apiClient.request<ListCommentsResponse>(
+    `/posts/${encodeURIComponent(postId)}/comments`,
+  );
+}
+
+export async function createPostComment(
+  apiClient: ApiClient,
+  postId: string,
+  input: CreateCommentInput,
+): Promise<CreateCommentResponse> {
+  return apiClient.request<CreateCommentResponse>(
+    `/posts/${encodeURIComponent(postId)}/comments`,
+    {
+      body: input,
+      method: 'POST',
+    },
+  );
 }
 
 export async function getFeedPage(
