@@ -15,7 +15,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "start": "npm run start --workspace server",
-    "test": "npm run test --workspace server"
+    "test": "npm run test --workspaces"
   },
   "engines": {
     "node": ">=20"
