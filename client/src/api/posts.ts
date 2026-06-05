@@ -40,6 +40,16 @@ type GetPostResponse = {
   post: Post;
 };
 
+export type FeedPageInfo = {
+  hasNextPage: boolean;
+  nextCursor: string | null;
+};
+
+export type FeedPage = {
+  pageInfo: FeedPageInfo;
+  posts: Post[];
+};
+
 export type UploadImageOptions = {
   file: File;
   onProgress?: (progress: number) => void;
@@ -149,4 +159,8 @@ export async function getPost(apiClient: ApiClient, postId: string): Promise<Pos
   );
 
   return response.post;
+}
+
+export async function getFeedPage(apiClient: ApiClient): Promise<FeedPage> {
+  return apiClient.request<FeedPage>('/feed');
 }
