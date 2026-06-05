@@ -1,0 +1,18 @@
+{
+  "name": "myclawteam",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev:client": "npm run dev --workspace client",
+    "dev:server": "npm run dev --workspace server",
+    "start": "npm run start --workspace server"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
