@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { buildGoogleAuthorizationUrl, GoogleOAuthError } from '../auth/google.js';
 import { signInWithGoogleCode } from '../auth/service.js';
+import { getAppConfig } from '../config/env.js';
 
 export const authRouter = Router();
 
@@ -9,12 +10,28 @@ function readQueryString(value: unknown): string | undefined {
 }
 
 authRouter.get('/google', (request, response) => {
+  if (!getAppConfig().auth.googleOAuthEnabled) {
+    response.status(503).json({
+      error: 'google_oauth_unavailable',
+      message: 'Google sign-in is unavailable until OAuth credentials are configured.',
+    });
+    return;
+  }
+
   const state = readQueryString(request.query.state);
 
   response.redirect(buildGoogleAuthorizationUrl(state));
 });
 
 authRouter.get('/google/callback', async (request, response) => {
+  if (!getAppConfig().auth.googleOAuthEnabled) {
+    response.status(503).json({
+      error: 'google_oauth_unavailable',
+      message: 'Google sign-in is unavailable until OAuth credentials are configured.',
+    });
+    return;
+  }
+
   const code = readQueryString(request.query.code);
 
   if (!code) {

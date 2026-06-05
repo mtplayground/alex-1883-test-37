@@ -43,6 +43,7 @@ const validConfig: AppConfig = {
     googleClientId: 'test-client-id.apps.googleusercontent.com',
     googleClientSecret: 'test-google-client-secret',
     googleOAuthRedirectUri: 'http://127.0.0.1:8080/auth/google/callback',
+    googleOAuthEnabled: true,
     jwtSecret: 'issue-31-test-jwt-secret-at-least-32-characters',
   },
   database: {
@@ -52,6 +53,7 @@ const validConfig: AppConfig = {
   objectStorage: {
     accessKeyId: 'test-access-key',
     bucket: 'test-bucket',
+    enabled: true,
     endpoint: 'https://storage.example.test',
     forcePathStyle: true,
     prefix: 'issue-31-tests',

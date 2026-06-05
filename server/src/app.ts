@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import express from 'express';
 import { checkDatabaseConnection } from './db/health.js';
 import { errorHandler, notFoundHandler } from './errors.js';
@@ -7,8 +9,37 @@ import { postsRouter } from './routes/posts.js';
 import { uploadsRouter } from './routes/uploads.js';
 import { usersRouter } from './routes/users.js';
 
+const clientDistPath = join(process.cwd(), 'client', 'dist');
+const clientIndexPath = join(clientDistPath, 'index.html');
+const clientRoutePattern = /^\/(?:$|create\/?$|posts\/[^/]+\/?$|users\/[^/]+\/?$)/;
+
+function requestPrefersHtml(request: express.Request): boolean {
+  const accept = request.get('accept') ?? '';
+
+  return accept.includes('text/html') && !accept.includes('application/json');
+}
+
+function mountClientApp(app: express.Express): boolean {
+  if (!existsSync(clientIndexPath)) {
+    return false;
+  }
+
+  app.use(express.static(clientDistPath));
+  app.get(clientRoutePattern, (request, response, next) => {
+    if (!requestPrefersHtml(request)) {
+      next();
+      return;
+    }
+
+    response.sendFile(clientIndexPath);
+  });
+
+  return true;
+}
+
 export function createApp(): express.Express {
   const app = express();
+  const hasClientApp = mountClientApp(app);
 
   app.disable('x-powered-by');
   app.use(express.json());
@@ -35,12 +66,14 @@ export function createApp(): express.Express {
     }
   });
 
-  app.get('/', (_request, response) => {
-    response.status(200).json({
-      name: 'myClawTeam',
-      message: 'API server initialized',
+  if (!hasClientApp) {
+    app.get('/', (_request, response) => {
+      response.status(200).json({
+        name: 'myClawTeam',
+        message: 'API server initialized',
+      });
     });
-  });
+  }
 
   app.use(notFoundHandler);
   app.use(errorHandler);

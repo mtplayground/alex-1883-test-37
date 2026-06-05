@@ -75,6 +75,12 @@ function getStorageKey(key: string, config: ObjectStorageConfig): string {
   return buildObjectStorageKey(key, config.prefix);
 }
 
+function ensureObjectStorageConfigured(config: ObjectStorageConfig): void {
+  if (!config.enabled) {
+    throw new Error('Object storage is not configured.');
+  }
+}
+
 export function createObjectKey(filename: string): string {
   const extension = extname(filename).toLowerCase();
 
@@ -83,6 +89,7 @@ export function createObjectKey(filename: string): string {
 
 export async function uploadObject(input: UploadObjectInput): Promise<UploadedObject> {
   const config = readObjectStorageConfig();
+  ensureObjectStorageConfigured(config);
   const storageKey = getStorageKey(input.key, config);
   const uploadBody = toConcreteUploadBody(input.body);
 
@@ -110,6 +117,10 @@ export async function createSignedObjectUrl(
   input: SignedObjectUrlInput,
 ): Promise<string> {
   const config = readObjectStorageConfig();
+  if (!config.enabled) {
+    return '';
+  }
+
   const storageKey = getStorageKey(input.key, config);
   const expiresIn = normalizeSignedUrlTtl(input.expiresInSeconds);
 

@@ -3,6 +3,7 @@ import { getAppConfig } from '../config/env.js';
 export type ObjectStorageConfig = {
   accessKeyId: string;
   bucket: string;
+  enabled: boolean;
   endpoint: string;
   forcePathStyle: boolean;
   prefix: string;
@@ -12,6 +13,10 @@ export type ObjectStorageConfig = {
 
 export function readObjectStorageConfig(): ObjectStorageConfig {
   return getAppConfig().objectStorage;
+}
+
+export function isObjectStorageConfigured(): boolean {
+  return readObjectStorageConfig().enabled;
 }
 
 export function buildObjectStorageKey(key: string, prefix: string): string {

@@ -1,6 +1,7 @@
 export { getObjectStorageClient, resetObjectStorageClientForTests } from './client.js';
 export {
   buildObjectStorageKey,
+  isObjectStorageConfigured,
   readObjectStorageConfig,
   type ObjectStorageConfig,
 } from './config.js';

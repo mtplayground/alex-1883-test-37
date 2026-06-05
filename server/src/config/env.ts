@@ -14,6 +14,7 @@ export type AppConfig = {
     googleClientId: string;
     googleClientSecret: string;
     googleOAuthRedirectUri: string;
+    googleOAuthEnabled: boolean;
     jwtSecret: string;
   };
   database: {
@@ -23,6 +24,7 @@ export type AppConfig = {
   objectStorage: {
     accessKeyId: string;
     bucket: string;
+    enabled: boolean;
     endpoint: string;
     forcePathStyle: boolean;
     prefix: string;
@@ -123,8 +125,14 @@ function validateDatabaseUrl(value: string): void {
 
 export function validateAppConfig(config: AppConfig): AppConfig {
   validateDatabaseUrl(config.database.url);
-  validateUrl('GOOGLE_OAUTH_REDIRECT_URI', config.auth.googleOAuthRedirectUri);
-  validateUrl('OBJECT_STORAGE_ENDPOINT', config.objectStorage.endpoint);
+
+  if (config.auth.googleOAuthEnabled) {
+    validateUrl('GOOGLE_OAUTH_REDIRECT_URI', config.auth.googleOAuthRedirectUri);
+  }
+
+  if (config.objectStorage.enabled) {
+    validateUrl('OBJECT_STORAGE_ENDPOINT', config.objectStorage.endpoint);
+  }
 
   if (config.auth.jwtSecret.length < 32) {
     throw new ConfigError('JWT_SECRET must be at least 32 characters long.');
@@ -134,11 +142,24 @@ export function validateAppConfig(config: AppConfig): AppConfig {
 }
 
 export function loadAppConfig(): AppConfig {
+  const googleClientId = readOptionalEnv('GOOGLE_CLIENT_ID') ?? '';
+  const googleClientSecret = readOptionalEnv('GOOGLE_CLIENT_SECRET') ?? '';
+  const googleOAuthRedirectUri = readOptionalEnv('GOOGLE_OAUTH_REDIRECT_URI') ?? '';
+  const objectStorageAccessKeyId =
+    readOptionalEnv('OBJECT_STORAGE_ACCESS_KEY_ID') ?? '';
+  const objectStorageBucket = readOptionalEnv('OBJECT_STORAGE_BUCKET') ?? '';
+  const objectStorageEndpoint = readOptionalEnv('OBJECT_STORAGE_ENDPOINT') ?? '';
+  const objectStorageSecretAccessKey =
+    readOptionalEnv('OBJECT_STORAGE_SECRET_ACCESS_KEY') ?? '';
+
   return validateAppConfig({
     auth: {
-      googleClientId: readRequiredEnv('GOOGLE_CLIENT_ID'),
-      googleClientSecret: readRequiredEnv('GOOGLE_CLIENT_SECRET'),
-      googleOAuthRedirectUri: readRequiredEnv('GOOGLE_OAUTH_REDIRECT_URI'),
+      googleClientId,
+      googleClientSecret,
+      googleOAuthRedirectUri,
+      googleOAuthEnabled: Boolean(
+        googleClientId && googleClientSecret && googleOAuthRedirectUri,
+      ),
       jwtSecret: readRequiredEnv('JWT_SECRET'),
     },
     database: {
@@ -146,9 +167,15 @@ export function loadAppConfig(): AppConfig {
     },
     nodeEnv: readNodeEnv(),
     objectStorage: {
-      accessKeyId: readRequiredEnv('OBJECT_STORAGE_ACCESS_KEY_ID'),
-      bucket: readRequiredEnv('OBJECT_STORAGE_BUCKET'),
-      endpoint: readRequiredEnv('OBJECT_STORAGE_ENDPOINT'),
+      accessKeyId: objectStorageAccessKeyId,
+      bucket: objectStorageBucket,
+      enabled: Boolean(
+        objectStorageAccessKeyId &&
+        objectStorageBucket &&
+        objectStorageEndpoint &&
+        objectStorageSecretAccessKey,
+      ),
+      endpoint: objectStorageEndpoint,
       forcePathStyle: readBooleanEnv('OBJECT_STORAGE_FORCE_PATH_STYLE', true),
       prefix: normalizePrefix(
         readOptionalEnv('OBJECT_STORAGE_PREFIX') ??
@@ -156,7 +183,7 @@ export function loadAppConfig(): AppConfig {
           readOptionalEnv('TIGRIS_PREFIX'),
       ),
       region: readOptionalEnv('OBJECT_STORAGE_REGION') ?? 'auto',
-      secretAccessKey: readRequiredEnv('OBJECT_STORAGE_SECRET_ACCESS_KEY'),
+      secretAccessKey: objectStorageSecretAccessKey,
     },
     server: {
       host: readOptionalEnv('HOST') ?? '0.0.0.0',

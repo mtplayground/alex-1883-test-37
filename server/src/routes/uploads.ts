@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { type AuthenticatedRequest, requireAuth } from '../auth/middleware.js';
-import { createObjectKey, uploadObject } from '../storage/index.js';
+import {
+  createObjectKey,
+  isObjectStorageConfigured,
+  uploadObject,
+} from '../storage/index.js';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const allowedImageTypes = new Set([
@@ -43,6 +47,14 @@ function isAllowedImageType(mimeType: string): boolean {
 
 uploadsRouter.post('/uploads/images', requireAuth, async (request, response) => {
   try {
+    if (!isObjectStorageConfigured()) {
+      response.status(503).json({
+        error: 'object_storage_unavailable',
+        message: 'Image uploads are unavailable until object storage is configured.',
+      });
+      return;
+    }
+
     await parseImageUpload(request, response);
 
     const { userId } = (request as AuthenticatedRequest).auth;
