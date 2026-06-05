@@ -19,4 +19,6 @@ node_modules/
 .storage_decision
 dist/
 coverage/
+playwright-report/
+test-results/
 .DS_Store
